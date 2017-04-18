@@ -26,12 +26,12 @@ public class Vocables {
 
     public void saveToFile(File file) throws IOException {
         FileUtils.createFileIfNotExists(file);
-        System.out.println("bla");
         StringBuilder stringBuffer = new StringBuilder();
         try (Writer writer = new BufferedWriter(new FileWriter(file))) {
             Vocable currentVocable = start;
             while (currentVocable != null) {
                 stringBuffer.append(currentVocable.toString());
+                stringBuffer.append("\n");
                 currentVocable = currentVocable.getNext();
             }
             writer.append(stringBuffer.toString());
