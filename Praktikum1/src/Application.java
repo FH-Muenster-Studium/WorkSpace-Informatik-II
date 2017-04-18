@@ -14,6 +14,7 @@ public class Application {
             loadFile(vocablesFile);
         } catch (IOException io) {
             io.printStackTrace();
+            System.out.println("Fehler beim Laden der Vokabeln");
         }
     }};
 
