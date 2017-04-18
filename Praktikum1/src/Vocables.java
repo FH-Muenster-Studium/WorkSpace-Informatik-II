@@ -1,3 +1,4 @@
+import java.io.*;
 
 public class Vocables {
 
@@ -8,6 +9,34 @@ public class Vocables {
      */
     public Vocables() {
         start = null;
+    }
+
+    public void loadFile(File file) throws IOException {
+        FileUtils.createFileIfNotExists(file);
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            Vocable vocable;
+            while ((line = reader.readLine()) != null) {
+                vocable = Vocable.fromString(line);
+                if (vocable == null) continue;
+                add(vocable);
+            }
+        }
+    }
+
+    public void saveToFile(File file) throws IOException {
+        FileUtils.createFileIfNotExists(file);
+        System.out.println("bla");
+        StringBuilder stringBuffer = new StringBuilder();
+        try (Writer writer = new BufferedWriter(new FileWriter(file))) {
+            Vocable currentVocable = start;
+            while (currentVocable != null) {
+                stringBuffer.append(currentVocable.toString());
+                currentVocable = currentVocable.getNext();
+            }
+            writer.append(stringBuffer.toString());
+        }
+        System.out.println(stringBuffer.toString());
     }
 
     /**
@@ -66,7 +95,7 @@ public class Vocables {
     /**
      * Search for a vocable from the given text and language
      *
-     * @param text Text to find
+     * @param text     Text to find
      * @param language language from the text to find
      * @return the vocable to find
      */

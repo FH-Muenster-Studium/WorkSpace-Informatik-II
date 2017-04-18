@@ -17,6 +17,20 @@ public class Vocable {
         prev = null;
     }
 
+    @Nullable
+    public static Vocable fromString(String text) {
+        String[] texts = text.split(";");
+        if (texts.length < 2) {
+            return null;
+        }
+        return new Vocable() {{
+            setData(new Data() {{
+                setEnglish(texts[0]);
+                setGerman(texts[1]);
+            }});
+        }};
+    }
+
     public void setNext(Vocable next) {
         this.next = next;
     }
@@ -52,6 +66,11 @@ public class Vocable {
         return false;
     }
 
+    @Override
+    public String toString() {
+        return data.toString();
+    }
+
     public static class Data {
 
         private String german;
@@ -81,8 +100,7 @@ public class Vocable {
 
         @Override
         public String toString() {
-            return "{german = " + german + "},\n" +
-                    "{english = " + english + "}";
+            return english + ";" + german;
         }
 
         @Override

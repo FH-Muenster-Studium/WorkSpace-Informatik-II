@@ -1,11 +1,21 @@
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Scanner;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Application {
 
-    private static Vocables vocables = new Vocables();
+    private static final File vocablesFile = new File("/Users/fabianterhorst/Desktop/vocable.txt");
+
+    private static final Vocables vocables = new Vocables() {{
+        try {
+            loadFile(vocablesFile);
+        } catch (IOException io) {
+            io.printStackTrace();
+        }
+    }};
 
     /**
      * Starts the vocable application
@@ -13,24 +23,6 @@ public class Application {
      * @param args command line args
      */
     public static void main(String[] args) {
-        vocables.add(new Vocable() {{
-            setData(new Data() {{
-                setEnglish("Car");
-                setGerman("Auto");
-            }});
-        }});
-        vocables.add(new Vocable() {{
-            setData(new Data() {{
-                setEnglish("Hello");
-                setGerman("Hallo");
-            }});
-        }});
-        vocables.add(new Vocable() {{
-            setData(new Data() {{
-                setEnglish("World");
-                setGerman("Welt");
-            }});
-        }});
         Scanner scanner;
         String text;
         Vocable currentVocable;
@@ -66,7 +58,13 @@ public class Application {
                         Vocable vocable = readNewVocable();
                         if (vocable != null) {
                             vocables.add(vocable);
-                            System.out.println("Vokabel erfolgreich hinzugefügt");
+                            try {
+                                vocables.saveToFile(vocablesFile);
+                                System.out.println("Vokabel erfolgreich hinzugefügt");
+                            } catch (IOException io) {
+                                io.printStackTrace();
+                                System.out.println("Vokabel konnte nicht hinzugefügt werden");
+                            }
                         } else {
                             System.out.println("Eingegebene Vokabel konnte nicht erkannt werden");
                         }
@@ -102,7 +100,13 @@ public class Application {
                                 break;
                             }
                             if (vocables.removeVocable(vocableToDelete)) {
-                                System.out.println("Vokabel erfolgreich gelöscht");
+                                try {
+                                    vocables.saveToFile(vocablesFile);
+                                    System.out.println("Vokabel erfolgreich gelöscht");
+                                } catch (IOException io) {
+                                    io.printStackTrace();
+                                    System.out.println("Vokabel konnte nicht gelöscht werden");
+                                }
                             } else {
                                 System.out.println("Vokabel konnte nicht gefunden werden");
                             }
@@ -153,16 +157,7 @@ public class Application {
     @Nullable
     private static Vocable readNewVocable() {
         String text = new Scanner(System.in).nextLine();
-        String[] texts = text.split(";");
-        if (texts.length != 2) {
-            return null;
-        }
-        return new Vocable() {{
-            setData(new Data() {{
-                setEnglish(texts[0]);
-                setGerman(texts[1]);
-            }});
-        }};
+        return Vocable.fromString(text);
     }
 
     private static void printMenu() {
