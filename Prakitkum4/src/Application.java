@@ -1,17 +1,22 @@
 
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Scanner;
 
 public class Application {
 
-    private static VocableManager vocables = new LinkedListManager();
+    private static VocableManager vocables = new DatabaseManager();
+
+    private static final File vocablesFile = new File("/Users/fabianterhorst/Desktop/vocable.txt");
 
     private enum MenuItem {
         MENU_SHOW(1, "Ausgabe"), MENU_SEARCH(2, "Suchen"),
         MENU_ADD(3, "Einfügen"), MENU_DELETE(4, "Löschen"),
-        MENU_TEST(5, "Abfrage");
+        MENU_TEST(5, "Abfrage"), MENU_MANAGER(6, "Vokabelverwaltung wechseln");
 
         private int index;
         private String title;
@@ -51,7 +56,6 @@ public class Application {
             if (scanner.hasNextInt()) {
                 MenuItem menuItem = MenuItem.fromIndex(scanner.nextInt());
                 if (menuItem != null) {
-                    label:
                     switch (menuItem) {
                         case MENU_SHOW:
                             List<Vocable> vocableList = vocables.getAllVocables();
@@ -76,6 +80,8 @@ public class Application {
                             System.out.println("{Englisch;Deutsch}");
                             Vocable vocable = readNewVocable();
                             if (vocable != null) {
+                                System.out.println(vocable);
+                                System.out.println("wird nun hinzugefügt...");
                                 boolean saved = vocables.save(vocable);
                                 System.out.println(saved
                                         ? "Vokabel erfolgreich hinzugefügt"
@@ -86,7 +92,7 @@ public class Application {
                             break;
                         case MENU_DELETE:
                             System.out.println("Bitte geben sie die zu löschende Vokabel in folgenden Format ein");
-                            System.out.println("{german/english;text}");
+                            System.out.println("{de/en;text}");
                             Scanner currentScanner = new Scanner(System.in);
                             if (currentScanner.hasNextLine()) {
                                 text = currentScanner.nextLine();
@@ -97,17 +103,10 @@ public class Application {
                                 }
                                 String languageText = texts[0];
                                 text = texts[1];
-                                final Vocable.Language language;
-                                switch (languageText) {
-                                    case "german":
-                                        language = Vocable.Language.GERMAN;
-                                        break;
-                                    case "english":
-                                        language = Vocable.Language.ENGLISH;
-                                        break;
-                                    default:
-                                        System.out.println("Ungültige Sprache: " + languageText);
-                                        break label;
+                                Vocable.Language language = Vocable.Language.fromText(languageText);
+                                if (language == null) {
+                                    System.out.println("Ungültige Sprache: " + languageText);
+                                    break;
                                 }
                                 Vocable vocableToDelete = vocables.findVocable(text, language);
                                 if (vocableToDelete == null) {
@@ -141,6 +140,12 @@ public class Application {
                                 System.out.println("Es konnten keine Vokabeln gefunden werden");
                             }
                             break;
+                        case MENU_MANAGER:
+                            System.out.println("Vokabelmanager wird gewechselt");
+                            System.out.println("Ihr Vokabelmanager war: " + vocables);
+                            switchVocableManager();
+                            System.out.println("Ihr Vokabelmanager ist nun: " + vocables);
+                            break;
                     }
                 } else {
                     System.out.println("Unbekannter Menü-Index");
@@ -161,6 +166,21 @@ public class Application {
         System.out.println("-- Menü --");
         for (MenuItem menuItem : MenuItem.values()) {
             System.out.println(menuItem);
+        }
+    }
+
+    private static void switchVocableManager() {
+        if (vocables instanceof DatabaseManager) {
+            try {
+                ((Closeable) vocables).close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            vocables = new LinkedListManager(vocablesFile);
+        } else if (vocables instanceof LinkedListManager) {
+            vocables = new DatabaseManager();
+        } else {
+            throw new IllegalArgumentException("Unknown VocableManager " + vocables.getClass().getSimpleName());
         }
     }
 }

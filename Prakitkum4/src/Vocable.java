@@ -6,7 +6,28 @@ import java.sql.SQLException;
 public class Vocable {
 
     public enum Language {
-        ENGLISH, GERMAN
+        ENGLISH("en"), GERMAN("de");
+
+        String text;
+
+        Language(String text) {
+            this.text = text;
+        }
+
+        @Override
+        public String toString() {
+            return text;
+        }
+
+        @Nullable
+        static Language fromText(String text) {
+            for (Language language : values()) {
+                if (language.text.equals(text)) {
+                    return language;
+                }
+            }
+            return null;
+        }
     }
 
     private Vocable next;
@@ -36,18 +57,18 @@ public class Vocable {
 
     @Nullable
     public static Vocable fromResultSet(ResultSet resultSet) throws SQLException {
-        String english = resultSet.getString(1);
+        String english = resultSet.getString(Language.ENGLISH.toString());
         if (english == null) {
             return null;
         }
-        String german = resultSet.getString(2);
+        String german = resultSet.getString(Language.GERMAN.toString());
         if (german == null) {
             return null;
         }
         return new Vocable() {{
             setData(new Data() {{
                 setEnglish(english);
-                setGerman(german;
+                setGerman(german);
             }});
         }};
     }

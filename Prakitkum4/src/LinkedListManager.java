@@ -1,18 +1,53 @@
+import org.jetbrains.annotations.Nullable;
+
+import java.io.*;
 import java.util.ArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 
-/**
- * Created by fabianterhorst on 26.05.17.
- */
 public class LinkedListManager implements VocableManager {
 
     private Vocable start;
 
+    private File file;
+
     /**
      * Initializes the linked vocable list
      */
-    public LinkedListManager() {
+    LinkedListManager(File file) {
         start = null;
+        this.file = file;
+        try {
+            loadFile(file);
+        } catch (IOException io) {
+            io.printStackTrace();
+        }
+    }
+
+    public void loadFile(File file) throws IOException {
+        FileUtils.createFileIfNotExists(file);
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            Vocable vocable;
+            while ((line = reader.readLine()) != null) {
+                vocable = Vocable.fromString(line);
+                if (vocable == null) continue;
+                add(vocable);
+            }
+        }
+    }
+
+    public void saveToFile(File file) throws IOException {
+        FileUtils.createFileIfNotExists(file);
+        try (Writer writer = new BufferedWriter(new FileWriter(file))) {
+            Vocable currentVocable = start;
+            StringBuilder stringBuffer = new StringBuilder();
+            while (currentVocable != null) {
+                stringBuffer.append(currentVocable.toString());
+                stringBuffer.append(System.lineSeparator());
+                currentVocable = currentVocable.getNext();
+            }
+            writer.append(stringBuffer.toString());
+        }
     }
 
     /**
@@ -22,6 +57,20 @@ public class LinkedListManager implements VocableManager {
      */
     @Override
     public boolean save(Vocable vocable) {
+        boolean addResult = add(vocable);
+        if (addResult) {
+            try {
+                saveToFile(file);
+            } catch (IOException io) {
+                io.printStackTrace();
+                delete(vocable);
+                return false;
+            }
+        }
+        return addResult;
+    }
+
+    private boolean add(Vocable vocable) {
         Vocable currentVocable = this.start;
         if (currentVocable == null) {
             start = vocable;
@@ -78,6 +127,7 @@ public class LinkedListManager implements VocableManager {
      * @param language language from the text to find
      * @return the vocable to find
      */
+    @Nullable
     @Override
     public Vocable findVocable(String text, Vocable.Language language) {
         Vocable currentVocable = this.start;
@@ -115,5 +165,10 @@ public class LinkedListManager implements VocableManager {
             currentVocable = currentVocable.getNext();
         }
         return vocables;
+    }
+
+    @Override
+    public String toString() {
+        return "Verkettete Liste Vokabelmanager";
     }
 }
